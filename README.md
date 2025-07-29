@@ -1,1 +1,2 @@
 # CRM-Integration-with-Lead-Sources
+In this project i have configured an open-source CRM software (ODOO) to implement the functionality of capturing sales leads from an excel file into Odoo using pyhton and subsequently triggering a workflow which automatically emails the leads based on the email-id in and the respective product a customer wants to purchase using email templatre configured within odoo.
