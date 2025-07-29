@@ -1,0 +1,129 @@
+Step-by-Step Guide to Install Odoo 18 on Ubuntu 20.04
+
+This guide will help in installing Odoo 18 on the Linux system running Ubuntu 20.04, using simple step-by-step commands. Each command is explained to understand what it's doing.
+
+
+sudo apt update && sudo apt full-upgrade -y
+What it does:  Updates your system and upgrades all the packages to their latest versions.
+
+---
+
+sudo apt-get install -y postgresql
+What it does:  Installs PostgreSQL, a software that stores Odoo's data.
+
+sudo su - postgres
+What it does:  Switches you to the PostgreSQL system user.
+
+createuser --createdb --username postgres --no-createrole --superuser --pwprompt odoo18
+What it does:  Creates a new PostgreSQL user named odoo18`. I'll be asked to type a password. User can create databases.
+
+exit
+What it does:  Returns me to your regular Linux user.
+
+---
+
+sudo apt install -y git build-essential wget curl nano \
+libpq-dev libxml2-dev libxslt1-dev libldap2-dev libsasl2-dev \
+libjpeg-dev libssl-dev libffi-dev zlib1g-dev liblcms2-dev \
+libblas-dev libatlas-base-dev
+What it does:  Installs libraries and tools that Odoo needs to work properly.
+
+---
+
+sudo apt install software-properties-common -y
+sudo add-apt-repository ppa:deadsnakes/ppa -y
+sudo apt update
+sudo apt install -y python3.10 python3.10-venv python3.10-dev
+What it does:  Adds the Deadsnakes PPA and installs Python 3.10 (Odoo requires it).
+
+---
+
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs npm
+sudo npm install -g rtlcss
+What it does:  Installs Node.js and a tool called `rtlcss`, which helps Odoo build web pages correctly.
+
+---
+
+wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_amd64.deb
+sudo apt install -y ./wkhtmltox_0.12.6-1.focal_amd64.deb
+What it does:  Installs software used to create PDFs from web pages (used by Odoo to generate invoices, etc.).
+
+---
+
+sudo useradd -m -d /opt/odoo18 -U -r -s /bin/bash odoo18
+sudo su - odoo18
+What it does:  Creates a new Linux user named `odoo18` and switches to it.
+
+git clone https://github.com/odoo/odoo --depth 1 --branch 18.0 .
+What it does:  Downloads the latest Odoo 18 source code into the current folder.
+
+---
+
+python3.10 -m venv venv
+source venv/bin/activate
+pip install wheel
+pip install -r requirements.txt
+What it does:  Creates a Python environment just for Odoo and installs all required packages.
+
+deactivate
+exit
+What it does:  Leaves the Python environment and exits the `odoo18` user.
+
+---
+
+sudo tee /etc/odoo18.conf > /dev/null <<'EOF'
+[options]
+admin_passwd = your_admin_password
+db_host = False
+db_port = False
+db_user = odoo18
+db_password = your_db_password
+addons_path = /opt/odoo18/addons
+logfile = /var/log/odoo18/odoo.log
+EOF
+What it does:  Creates a config file that tells Odoo how to connect to the database.
+
+sudo mkdir /var/log/odoo18
+sudo chown odoo18: /var/log/odoo18
+What it does:  Makes a folder for Odoo to save its logs.
+
+---
+
+sudo tee /etc/systemd/system/odoo18.service > /dev/null <<'EOF'
+[Unit]
+Description=Odoo 18 (Community)
+After=postgresql.service
+
+[Service]
+Type=simple
+User=odoo18
+ExecStart=/opt/odoo18/venv/bin/python /opt/odoo18/odoo-bin -c /etc/odoo18.conf
+StandardOutput=journal+console
+
+[Install]
+WantedBy=multi-user.target
+EOF
+What it does: Creates a service so that Odoo can start automatically like any other Linux app.
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now odoo18
+sudo systemctl status odoo18
+What it does:  Starts the Odoo service and makes it launch every time your computer boots.
+
+---
+
+Go to your browser and type:
+http://localhost:8069
+Or use your computer's IP address:
+http://YOUR_SERVER_IP:8069
+What it does: Opens the Odoo setup screen where you can create a new database and start using the CRM.
+
+---
+
+- Need to remember the  admin_passwd and db_password.
+- If anything breaks, check logs in `/var/log/odoo18/odoo.log`
+- we can stop/start Odoo using:
+sudo systemctl stop odoo18
+sudo systemctl start odoo18
+
